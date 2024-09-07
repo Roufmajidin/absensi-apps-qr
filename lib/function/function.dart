@@ -73,47 +73,32 @@ class QRScannerProvider with ChangeNotifier {
       if (_hasScanned) return;
 
       result = scanData;
+      log('ini a ${result?.code}');
+      controller.pauseCamera();
+      notifyListeners();
+      final jsonMap = json.decode(result!.code.toString());
+      final encryptedDataWithIv = jsonMap['data'];
+      decrpyt(encryptedDataWithIv, "roufm-16idawatii");
 
-      final data = DataModel.fromJson(jsonDecode(result!.code!));
-      _dataModel = data;
-
-      // Check if data is successfully recorded in the model
-      if (_dataModel != null || _dataModel!.data.isNotEmpty) {
-        await getNIM();
-        // controller.pauseCamera(); // Stop the camera
-        // _hasScanned = true;
-        var a = getStudent();
-        log('Hallo ${a}');
-        print('stu ${a}');
-        if (a == null) {
-          _status = "Data tidak ada";
-          _state = LoadingState.error;
-          controller.pauseCamera(); // Stop the camera
-
-          notifyListeners();
-        } else {
-          _status = "ada";
-
-          _stateFetch = LoadingState.success;
-
-          controller.pauseCamera();
-          notifyListeners();
-        }
-      }
+      // as
       print(_status);
     });
   }
 
   Student? getStudent() {
-    // _stateFetch = LoadingState.loading;
+    _stateFetch = LoadingState.loading;
 
     var student = _dataModel?.data[_nim];
     if (student == null) {
       log("Student not found for NIM $_nim");
       _status = "Data tidak ada";
-      // _stateFetch = LoadingState.error;
-      // notifyListeners();
+      _stateFetch = LoadingState.error;
+      notifyListeners();
       return null;
+    } else {
+      _status = "Ditemukan";
+      _state = LoadingState.success;
+      notifyListeners();
     }
 
     // _nama = student.matkul; // Assuming you want to use matkul for the name
@@ -127,45 +112,59 @@ class QRScannerProvider with ChangeNotifier {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _nim = prefs.getString('nim');
     log('NIM yang digunakan adalah $_nim');
-    notifyListeners(); // Notify after updating _nim
+    notifyListeners(); 
   }
 
   Future<void> getNama() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _nama = prefs.getString('nama');
     log('Nama yang digunakan adalah $_nama');
-    notifyListeners(); // Notify after updating _nama
+    notifyListeners();
+  }
+
+  String _baseUrl = '';
+
+  Future<void> fetchBaseUrl() async {
+    final response = await http.get(Uri.parse(
+        'https://qr-abensi-default-rtdb.firebaseio.com/endpoint_injection/data.json'));
+
+    if (response.statusCode == 200) {
+      _baseUrl = json.decode(response.body);
+      // print('ini adalah $_baseUrl');
+      notifyListeners();
+    } else {
+      throw Exception('Failed to load endpoint');
+    }
   }
 
   Future<int> postData(String id) async {
     _state = LoadingState.loading;
     notifyListeners();
 
-    var endpoint = "https://6344-103-191-218-249.ngrok-free.app/absensi/$id";
     try {
       final response = await http.post(
-        Uri.parse(endpoint),
+        Uri.parse('$_baseUrl/absensi/$id'),
         headers: {'Content-Type': 'application/json'},
-        // body: json.encode(data), // Uncomment and add your data if needed
+        // body: json.encode(data), 
       );
 
       // if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        log('ini adalah ${jsonResponse}');
-        _apiResponse = ApiResponse.fromJson(jsonResponse);
+      final jsonResponse = json.decode(response.body);
+      log('ini adalah $jsonResponse');
+      _apiResponse = ApiResponse.fromJson(jsonResponse);
 
-        if (_apiResponse!.success) {
-          _state = LoadingState.success;
-          _errorMessage = _apiResponse?.message; // Clear error message on success
-          notifyListeners();
-          return response.statusCode;
-        } else {
-          _errorMessage = _apiResponse!.message;
-          _state = LoadingState.error;
-          notifyListeners();
-          return response.statusCode;
-        }
-      // } 
+      if (_apiResponse!.success) {
+        _state = LoadingState.success;
+        _errorMessage = _apiResponse?.message; 
+        notifyListeners();
+        return response.statusCode;
+      } else {
+        _errorMessage = _apiResponse!.message;
+        _state = LoadingState.error;
+        notifyListeners();
+        return response.statusCode;
+      }
+      // }
       // else {
       //   _errorMessage = _apiResponse?.message;
       //   _state = LoadingState.error;
@@ -176,7 +175,55 @@ class QRScannerProvider with ChangeNotifier {
       _errorMessage = 'An error occurred: $error';
       _state = LoadingState.error;
       notifyListeners();
-      return 500; // Return a generic error status code
+      return 500; 
     }
+  }
+
+  Future<void> decrpyt(String kode, String key) async {
+    _state = LoadingState.loading;
+    notifyListeners();
+
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/decode/$kode/$key'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body) as Map<String, dynamic>;
+        log('Response data: $jsonResponse');
+
+        final dataModel = DataModel.fromJson(jsonResponse);
+        log('Parsed DataModel: $dataModel');
+        _dataModel = dataModel;
+        _hasScanned = true;
+
+        notifyListeners();
+        if (_dataModel != null || _dataModel!.data.isNotEmpty) {
+          await getNIM();
+          // controller.pauseCamera(); // Stop the camera
+          getStudent();
+
+          // log('Hallo ${a}');
+        }
+
+        if (_apiResponse!.success) {
+          _state = LoadingState.success;
+          _errorMessage = null; 
+        } else {
+          _errorMessage = _apiResponse!.message;
+          _state = LoadingState.error;
+        }
+      } else {
+        _errorMessage = 'Server error: ${response.statusCode}';
+        _state = LoadingState.error;
+      }
+    } catch (error) {
+      _errorMessage = 'An error occurred: $error';
+      _state = LoadingState.error;
+    }
+
+    notifyListeners();
+    // return response.statusCode;
   }
 }
