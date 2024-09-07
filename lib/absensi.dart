@@ -45,6 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Provider.of<QRScannerProvider>(context, listen: false);
     qrScannerProvider.getNIM();
     qrScannerProvider.getNama();
+    qrScannerProvider.fetchBaseUrl();
     EasyLoading.addStatusCallback((status) {
       print('EasyLoading Status $status');
       if (status == EasyLoadingStatus.dismiss) {
@@ -123,36 +124,40 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(
                   height: 50,
                 ),
-                Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        _timer,
-                        style: const TextStyle(
-                          fontSize: 40,
-                          color: Colors.white,
-                          fontFamily:
-                              'Digital-7', // Custom font can be used here
-                        ),
+                Column(
+                  children: [
+                    Text(
+                      _timer,
+                      style: const TextStyle(
+                        fontSize: 40,
+                        color: Colors.white,
+                        fontFamily:
+                            'Digital-7', // Custom font can be used here
                       ),
-                      Text(
-                        _dateString,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          color: Colors.white,
-                          fontFamily:
-                              'Digital-7', // Custom font can be used here
-                        ),
+                    ),
+                    Text(
+                      _dateString,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        color: Colors.white,
+                        fontFamily:
+                            'Digital-7', // Custom font can be used here
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.symmetric(
+                      vertical: qrScannerProvider.state ==
+                                  LoadingState.initial ||
+                              qrScannerProvider.state == LoadingState.loading || qrScannerProvider.state == LoadingState.error
+                          ? 140
+                          : 20),
                   child: Container(
                     padding: const EdgeInsets.all(5.0),
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 238, 238, 238),
+                      color: const Color.fromARGB(255, 238, 238, 238)
+                          .withOpacity(0.5),
                       borderRadius: BorderRadius.circular(8.0),
                       boxShadow: const [
                         BoxShadow(
@@ -171,7 +176,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: 300,
                     child: student != null
                         ? QrImageView(
-                            data: qrScannerProvider.dataModel!.data.toString(),
+                            data: qrScannerProvider.dataModel!.data
+                                .toString(),
                             version: QrVersions.auto,
                             size: 300,
                             gapless: false,
@@ -183,7 +189,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           )
                         : QRView(
                             key: qrKey,
-                            onQRViewCreated: qrScannerProvider.onQRViewCreated,
+                            onQRViewCreated:
+                                qrScannerProvider.onQRViewCreated,
                           ),
                   ),
                 ),
@@ -197,7 +204,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 Container(
                   width: double.infinity,
-                  height: MediaQuery.of(context).size.height,
+                  height: qrScannerProvider.state == LoadingState.loading
+                      ? 200
+                      : MediaQuery.of(context).size.height * 0.5 ,
                   padding: const EdgeInsets.only(bottom: 100),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -234,14 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         const SizedBox(
                           height: 30,
                         ),
-                        // if (qrScannerProvider.state == LoadingState.error)
-                        //   const Padding(
-                        //     padding: EdgeInsets.all(8.0),
-                        //     child: Text(
-                        //       'Data tidak ditemukan',
-                        //       style: TextStyle(color: Colors.red, fontSize: 16),
-                        //     ),
-                        //   ),
+
                         if (student != null)
                           Stack(
                             // alignment: Alignment.bottomCenter,
@@ -305,6 +307,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               setState(() {
                                 kirimData = true;
                               });
+                              await qrScannerProvider.fetchBaseUrl();
                               var statusCode = await qrScannerProvider
                                   .postData(student.idAbsen);
                               if (statusCode == 400) {
@@ -357,15 +360,31 @@ class _MyHomePageState extends State<MyHomePage> {
                               height: 50,
                               padding: const EdgeInsets.only(bottom: 1),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.5),
+                                color: Colors.redAccent.withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               child: const Text(
                                 "Data Absen mu tidak tersedia pada QR",
-                                style: TextStyle(
-                                    color: Colors.blue, fontSize: 14),
+                                style:
+                                    TextStyle(color: Colors.blue, fontSize: 14),
                               ),
-                            )
+                            ),
+                        if (qrScannerProvider.state == LoadingState.loading || qrScannerProvider.state == LoadingState.initial)
+                          Container(
+                            alignment: Alignment.center,
+                            width: double.infinity,
+                            height: 50,
+                            padding: const EdgeInsets.only(bottom: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: const Text(
+                              "Arahkan Kamera ke QR codes",
+                              style:
+                                  TextStyle(color: Colors.blue, fontSize: 14),
+                            ),
+                          )
                       ],
                     ),
                   ),
