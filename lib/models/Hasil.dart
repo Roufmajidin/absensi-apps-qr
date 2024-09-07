@@ -1,6 +1,25 @@
-import 'dart:convert';
+class DataModel {
+  final Map<String, Student> data;
 
-// Class to represent individual student data
+  DataModel({required this.data});
+
+  factory DataModel.fromJson(Map<String, dynamic> json) {
+    final data = <String, Student>{};
+    json.forEach((key, value) {
+      data[key] = Student.fromJson(value);
+    });
+    return DataModel(data: data);
+  }
+
+  Map<String, dynamic> toJson() {
+    final jsonData = <String, dynamic>{};
+    data.forEach((key, value) {
+      jsonData[key] = value.toJson();
+    });
+    return jsonData;
+  }
+}
+
 class Student {
   final String mahasiswa;
   final String matkul;
@@ -22,7 +41,6 @@ class Student {
     required this.pertemuan,
   });
 
-  // Factory method to create a Student instance from JSON
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
       mahasiswa: json['mahasiswa'],
@@ -36,7 +54,6 @@ class Student {
     );
   }
 
-  // Method to convert a Student instance to JSON
   Map<String, dynamic> toJson() {
     return {
       'mahasiswa': mahasiswa,
@@ -48,27 +65,5 @@ class Student {
       'id_absen': idAbsen,
       'pertemuan': pertemuan,
     };
-  }
-}
-
-class DataModel {
-  final Map<String, Student> data;
-
-  DataModel({required this.data});
-
-  factory DataModel.fromJson(Map<String, dynamic> json) {
-    final Map<String, Student> data = {};
-    json['data'].forEach((key, value) {
-      data[key] = Student.fromJson(value);
-    });
-    return DataModel(data: data);
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> jsonData = {};
-    data.forEach((key, value) {
-      jsonData[key] = value.toJson();
-    });
-    return {'data': jsonData};
   }
 }
