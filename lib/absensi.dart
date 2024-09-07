@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:absenku_pintar/function/function.dart';
 import 'package:absenku_pintar/function/loader.dart';
 import 'package:absenku_pintar/models/Hasil.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:ui' as ui; // For ImageFilter
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -30,15 +33,25 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _passwordController = TextEditingController();
   String _timer = "00:00:00";
   String _dateString = "YYYY-MM-DD";
-
+  Timer? _timerLoad;
+  bool kirimData = false;
+  late double _progress;
   @override
   void initState() {
     super.initState();
+
     _updateTime();
     final qrScannerProvider =
         Provider.of<QRScannerProvider>(context, listen: false);
     qrScannerProvider.getNIM();
     qrScannerProvider.getNama();
+    EasyLoading.addStatusCallback((status) {
+      print('EasyLoading Status $status');
+      if (status == EasyLoadingStatus.dismiss) {
+        _timerLoad?.cancel();
+      }
+    });
+    EasyLoading.showSuccess('Use in initState');
   }
 
   void _updateTime() {
@@ -78,7 +91,6 @@ class _MyHomePageState extends State<MyHomePage> {
       qrScannerProvider.onQ(controller);
     }
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final student = qrScannerProvider.getStudent(); // Fetch student data
 
     // Display SnackBar only once when the stateFetch changes to success
-   
+
     log('statet adalah ${qrScannerProvider.state}');
     // if(qrScannerProvider.state loading lebih dari 5 detik, maka)
     //  if (qrScannerProvider.state == LoadingState.success)
@@ -222,33 +234,105 @@ class _MyHomePageState extends State<MyHomePage> {
                         const SizedBox(
                           height: 30,
                         ),
-                        if (qrScannerProvider.state == LoadingState.error)
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Data tidak ditemukan',
-                              style: TextStyle(color: Colors.red, fontSize: 16),
-                            ),
-                          ),
+                        // if (qrScannerProvider.state == LoadingState.error)
+                        //   const Padding(
+                        //     padding: EdgeInsets.all(8.0),
+                        //     child: Text(
+                        //       'Data tidak ditemukan',
+                        //       style: TextStyle(color: Colors.red, fontSize: 16),
+                        //     ),
+                        //   ),
                         if (student != null)
-                          Column(
+                          Stack(
+                            // alignment: Alignment.bottomCenter,
                             children: [
-                              builRowWidget(
-                                  'Mata Kuliah', student.matkul.toString()),
-                              builRowWidget('Kelas', student.kelas.toString()),
-                              builRowWidget(
-                                  'Pertemuan', student.pertemuan.toString()),
-                              builRowWidget(
-                                  'Tanggal', student.tanggal.toString()),
-                              builRowWidget(
-                                  'Mahasiswa', student.mahasiswa.toString()),
-                              builRowWidget(
-                                  'Semester', student.semester.toString()),
+                              ImageFiltered(
+                                imageFilter: ImageFilter.blur(
+                                    sigmaX: kirimData == true ? 3.0 : 0,
+                                    sigmaY: kirimData == true ? 3.0 : 0),
+                                child: Column(
+                                  children: [
+                                    builRowWidget('Mata Kuliah',
+                                        student.matkul.toString()),
+                                    builRowWidget(
+                                        'Kelas', student.kelas.toString()),
+                                    builRowWidget('Pertemuan',
+                                        student.pertemuan.toString()),
+                                    builRowWidget(
+                                        'Tanggal', student.tanggal.toString()),
+                                    builRowWidget('Mahasiswa',
+                                        student.mahasiswa.toString()),
+                                    builRowWidget('Semester',
+                                        student.semester.toString()),
+                                  ],
+                                ),
+                              ),
+                              kirimData == true
+                                  ? Center(
+                                      child: Container(
+                                        alignment: Alignment.center,
+                                        width: 150,
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            color:
+                                                Colors.black.withOpacity(0.6)),
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 20.0),
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Mengirim data',
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  : SizedBox()
                             ],
                           ),
                         if (student != null)
                           GestureDetector(
-                            // onTap: _saveData,
+                            onTap: () async {
+                              log('absen id ${student.idAbsen}');
+                              setState(() {
+                                kirimData = true;
+                              });
+                              var statusCode = await qrScannerProvider
+                                  .postData(student.idAbsen);
+                              if (statusCode == 400) {
+                                setState(() {
+                                  kirimData = false;
+                                });
+                              }
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    qrScannerProvider.errorMessage.toString(),
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: qrScannerProvider.state ==
+                                          LoadingState.error
+                                      ? Colors.red
+                                      : Colors.green,
+                                ),
+                              );
+
+                              // Delay 5 seconds
+                              await Future.delayed(Duration(seconds: 5));
+
+                              setState(() {
+                                kirimData = false;
+                              });
+                            },
                             child: Container(
                               alignment: Alignment.center,
                               width: double.infinity,
@@ -267,21 +351,21 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         if (qrScannerProvider.state == LoadingState.error)
                           if (qrScannerProvider.status == "Data tidak ada")
-                          Container(
-                            alignment: Alignment.center,
-                            width: double.infinity,
-                            height: 50,
-                            padding: const EdgeInsets.only(bottom: 1),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            child: const Text(
-                              "Data Absen mu tidak tersedia pada QR",
-                              style:
-                                  TextStyle(color: Colors.green, fontSize: 20),
-                            ),
-                          )
+                            Container(
+                              alignment: Alignment.center,
+                              width: double.infinity,
+                              height: 50,
+                              padding: const EdgeInsets.only(bottom: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: const Text(
+                                "Data Absen mu tidak tersedia pada QR",
+                                style: TextStyle(
+                                    color: Colors.blue, fontSize: 14),
+                              ),
+                            )
                       ],
                     ),
                   ),

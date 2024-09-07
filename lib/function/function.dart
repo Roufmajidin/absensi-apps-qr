@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:absenku_pintar/function/loader.dart';
+import 'package:absenku_pintar/models/api_response.dart';
 import 'package:flutter/foundation.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:absenku_pintar/models/Hasil.dart';
+import 'package:http/http.dart' as http;
 
 // enum LoadingState { initial, loading, success, error }
 
@@ -16,6 +18,7 @@ class QRScannerProvider with ChangeNotifier {
   LoadingState _stateFetch = LoadingState.initial;
   String? _errorMessage;
   DataModel? _dataModel;
+  ApiResponse? _apiResponse;
 
   Barcode? get result => _result;
   QRViewController? get controller => _controller;
@@ -23,6 +26,8 @@ class QRScannerProvider with ChangeNotifier {
   LoadingState get stateFetch => _stateFetch;
   String? get errorMessage => _errorMessage;
   DataModel? get dataModel => _dataModel;
+  ApiResponse? get apiResponse => _apiResponse;
+
   String? _nim;
   String? _nama;
   String? _status;
@@ -88,7 +93,7 @@ class QRScannerProvider with ChangeNotifier {
           notifyListeners();
         } else {
           _status = "ada";
-          
+
           _stateFetch = LoadingState.success;
 
           controller.pauseCamera();
@@ -130,5 +135,48 @@ class QRScannerProvider with ChangeNotifier {
     _nama = prefs.getString('nama');
     log('Nama yang digunakan adalah $_nama');
     notifyListeners(); // Notify after updating _nama
+  }
+
+  Future<int> postData(String id) async {
+    _state = LoadingState.loading;
+    notifyListeners();
+
+    var endpoint = "https://6344-103-191-218-249.ngrok-free.app/absensi/$id";
+    try {
+      final response = await http.post(
+        Uri.parse(endpoint),
+        headers: {'Content-Type': 'application/json'},
+        // body: json.encode(data), // Uncomment and add your data if needed
+      );
+
+      // if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        log('ini adalah ${jsonResponse}');
+        _apiResponse = ApiResponse.fromJson(jsonResponse);
+
+        if (_apiResponse!.success) {
+          _state = LoadingState.success;
+          _errorMessage = _apiResponse?.message; // Clear error message on success
+          notifyListeners();
+          return response.statusCode;
+        } else {
+          _errorMessage = _apiResponse!.message;
+          _state = LoadingState.error;
+          notifyListeners();
+          return response.statusCode;
+        }
+      // } 
+      // else {
+      //   _errorMessage = _apiResponse?.message;
+      //   _state = LoadingState.error;
+      //   notifyListeners();
+      //   return response.statusCode;
+      // }
+    } catch (error) {
+      _errorMessage = 'An error occurred: $error';
+      _state = LoadingState.error;
+      notifyListeners();
+      return 500; // Return a generic error status code
+    }
   }
 }
