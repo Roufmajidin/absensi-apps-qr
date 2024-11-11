@@ -79,11 +79,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _refresh() async {
-    // Simulate a delay for the refresh process
     await Future.delayed(const Duration(seconds: 1));
-
-    // Trigger any data refresh logic here
-    _updateTime(); // Update the time to simulate refresh
+    _updateTime(); 
     final qrScannerProvider =
         Provider.of<QRScannerProvider>(context, listen: false);
     QRViewController? controller = qrScannerProvider.controller;
@@ -176,8 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: 300,
                     child: student != null
                         ? QrImageView(
-                            data: qrScannerProvider.dataModel!.data
-                                .toString(),
+                            data: qrScannerProvider.result!.code.toString(),
                             version: QrVersions.auto,
                             size: 300,
                             gapless: false,
@@ -279,10 +275,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                                 BorderRadius.circular(12),
                                             color:
                                                 Colors.black.withOpacity(0.6)),
-                                        child: Column(
+                                        child: const Column(
                                           children: [
                                             Padding(
-                                              padding: const EdgeInsets.only(
+                                              padding: EdgeInsets.only(
                                                   top: 20.0),
                                               child: CircularProgressIndicator(
                                                 color: Colors.white,
@@ -297,7 +293,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ),
                                       ),
                                     )
-                                  : SizedBox()
+                                  : const SizedBox()
                             ],
                           ),
                         if (student != null)
@@ -320,7 +316,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 SnackBar(
                                   content: Text(
                                     qrScannerProvider.errorMessage.toString(),
-                                    style: TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
                                   backgroundColor: qrScannerProvider.state ==
                                           LoadingState.error
@@ -330,7 +326,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               );
 
                               // Delay 5 seconds
-                              await Future.delayed(Duration(seconds: 5));
+                              await Future.delayed(const Duration(seconds: 5));
 
                               setState(() {
                                 kirimData = false;
@@ -407,7 +403,7 @@ class _MyHomePageState extends State<MyHomePage> {
             width: 200,
             child: Text(
               key,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontFamily: "Poppins",
               ),
