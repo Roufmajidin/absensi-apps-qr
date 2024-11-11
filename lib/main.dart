@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:absenku_pintar/absensi.dart';
+import 'package:absenku_pintar/detail_screen.dart';
 import 'package:absenku_pintar/function/function.dart';
 import 'package:absenku_pintar/login_screen.dart';
 import 'package:absenku_pintar/widgets/LoginCard.dart';
@@ -31,13 +32,14 @@ class MyApp extends StatelessWidget {
         home: FutureBuilder<bool>(
           future: _checkLoginStatus(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
-            } else if (snapshot.hasData && snapshot.data == true) {
-              return const MyHomePage(title: 'Absensi',);
-            } else {
-              return loginScreen();
-            }
+            return DetailScreen();
+            // if (snapshot.connectionState == ConnectionState.waiting) {
+            //   return const CircularProgressIndicator();
+            // } else if (snapshot.hasData && snapshot.data == true) {
+            //   return const MyHomePage(title: 'Absensi',);
+            // } else {
+            //   return loginScreen();
+            // }
           },
         ),
       ),
