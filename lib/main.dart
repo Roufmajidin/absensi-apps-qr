@@ -4,6 +4,7 @@ import 'package:absenku_pintar/absensi.dart';
 import 'package:absenku_pintar/detail_screen.dart';
 import 'package:absenku_pintar/function/function.dart';
 import 'package:absenku_pintar/login_screen.dart';
+import 'package:absenku_pintar/matkul_screen.dart';
 import 'package:absenku_pintar/widgets/LoginCard.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
         home: FutureBuilder<bool>(
           future: _checkLoginStatus(),
           builder: (context, snapshot) {
-            return DetailScreen();
+            return MatkulPage();
             // if (snapshot.connectionState == ConnectionState.waiting) {
             //   return const CircularProgressIndicator();
             // } else if (snapshot.hasData && snapshot.data == true) {

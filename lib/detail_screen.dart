@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'widgets/dosen_widget.dart';
+import 'widgets/extract_widget.dart';
+import 'widgets/list_absen.dart';
+
 class DetailScreen extends StatefulWidget {
   const DetailScreen({super.key});
 
@@ -103,7 +107,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 child: ListView(
                   shrinkWrap: true,
                   scrollDirection:
-                      Axis.horizontal, // ListView menjadi horizontal
+                      Axis.horizontal, 
                   children: [
                     ExtractWidget(
                         icon: Icons.file_copy, string: "File Pertemuan"),
@@ -118,115 +122,6 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class ListAbsen extends StatelessWidget {
-  String string;
-  bool isTrue;
-
-  ListAbsen({
-    super.key,
-    required this.isTrue,
-    required this.string,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-            color: const Color(0xff8186b3),
-            borderRadius: BorderRadius.circular(8)),
-        child: Text(
-          string,
-          style: TextStyle(
-            fontFamily: "CustomIcons",
-              fontSize: 18, fontWeight: FontWeight.w400, color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
-
-class ExtractWidget extends StatelessWidget {
-  String string;
-
-  IconData icon;
-
-  ExtractWidget({
-    required this.icon,
-    required this.string,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: Container(
-        height: 120,
-        width: 140,
-        decoration: BoxDecoration(
-            border: Border.all(
-              color: const Color(0xff8186b3),
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: const Color(0xff8186b3),
-              size: 40,
-            ),
-            Text(
-              string,
-              style: TextStyle(
-                fontFamily: "CustomIcons",
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xff8186b3)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ignore: must_be_immutable
-class DetailDosen extends StatelessWidget {
-  String string;
-
-  IconData icon;
-
-  DetailDosen({
-    required this.icon,
-    required this.string,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(right:4.0),
-          child: Icon(
-            icon,
-            color: const Color(0xff8186b3),
-          ),
-        ),
-        Text(
-          string,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, fontFamily: "CustomIcons"),
-        ),
-      ],
     );
   }
 }
