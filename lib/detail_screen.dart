@@ -190,7 +190,7 @@ class ExtractWidget extends StatelessWidget {
                 fontFamily: "CustomIcons",
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xff8186b3)),
+                  color: const Color(0xff8186b3)),
             ),
           ],
         ),
